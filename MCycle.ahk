@@ -11,62 +11,34 @@ A_TrayMenu.Add("Show/Hide", ToggleWindow)
 A_TrayMenu.Add("Exit", (*) => ExitApp())
 A_TrayMenu.Default := "Show/Hide"
 
-; ── window (resizable via +Resize, keep borderless) ───────────────────────────
-MyGui := Gui("+AlwaysOnTop -Caption +ToolWindow +Resize")
+; ── window ────────────────────────────────────────────────────────────────────
+MyGui := Gui("+AlwaysOnTop -Caption +ToolWindow")
 MyGui.BackColor := "000000"
 MyGui.MarginX   := 0
 MyGui.MarginY   := 0
 
+FONT_SIZE := 13
+CHAR_W    := 9   ; Consolas s13 bold ~9px per char
+PAD_X     := 12
+SEP_W     := 14
+H         := 36
+
 textControls := []
-xPos := 8
+xPos := PAD_X
 for i, item in ITEMS {
     if (i > 1) {
-        sep := MyGui.Add("Text", "x" xPos " y6 w10 h16 cFFFFFF", "|")
-        sep.SetFont("s9 bold", "Consolas")
-        xPos += 12
+        sep := MyGui.Add("Text", "x" xPos " y9 w" SEP_W " h20 cFFFFFF Center", "|")
+        sep.SetFont("s" FONT_SIZE " bold", "Consolas")
+        xPos += SEP_W
     }
-    w := StrLen(item) * 9 + 2
-    ctrl := MyGui.Add("Text", "x" xPos " y6 w" w " h16 c" (i = 1 ? "FFFF00" : "FFFFFF"), item)
-    ctrl.SetFont("s9 bold", "Consolas")
+    w := StrLen(item) * CHAR_W + 6
+    ctrl := MyGui.Add("Text", "x" xPos " y9 w" w " h20 c" (i = 1 ? "FFFF00" : "FFFFFF"), item)
+    ctrl.SetFont("s" FONT_SIZE " bold", "Consolas")
     textControls.Push(ctrl)
     xPos += w
 }
 
-MyGui.Show("w" (xPos + 8) " h28 x50 y50 NoActivate")
-
-; ── resize: scale all labels proportionally ───────────────────────────────────
-MyGui.OnEvent("Size", OnResize)
-
-OnResize(thisGui, minMax, newW, newH) {
-    if minMax = -1  ; minimized
-        return
-    ; recalculate font size from window height
-    fontSize := Max(6, Round(newH * 0.55))
-    charW    := Round(fontSize * 0.72)
-    xPos     := 8
-    sepIdx   := 0
-    ctrlIdx  := 0
-    for i, item in ITEMS {
-        if (i > 1) {
-            sepIdx++
-            ; separators are interleaved — find them by re-querying
-        }
-    }
-    ; simpler: just reflow text controls with new font
-    ctrlIdx := 1
-    xPos    := 8
-    for i, item in ITEMS {
-        if (i > 1) {
-            xPos += Round(charW * 1.4)   ; separator gap
-        }
-        w := StrLen(item) * charW + 4
-        yOff := Max(2, Round((newH - fontSize * 1.4) / 2))
-        textControls[ctrlIdx].Move(xPos, yOff, w, Round(fontSize * 1.4))
-        textControls[ctrlIdx].SetFont("s" fontSize " bold", "Consolas")
-        xPos += w
-        ctrlIdx++
-    }
-}
+MyGui.Show("w" (xPos + PAD_X) " h" H " x50 y50 NoActivate")
 
 ; ── drag to move ──────────────────────────────────────────────────────────────
 OnMessage(0x0201, WM_LBUTTONDOWN)
