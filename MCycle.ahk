@@ -61,7 +61,7 @@ ToggleWindow(*) {
 }
 
 ; ── global hotkey: X cycles highlight ────────────────────────────────────────
-~x:: {
+~*x:: {
     global current
     textControls[current].Opt("cFFFFFF")
     current := (current = ITEMS.Length) ? 1 : current + 1
