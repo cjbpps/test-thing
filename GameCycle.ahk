@@ -3,39 +3,37 @@
 
 ITEMS   := ["After M", "Before M", "After O", "Before O"]
 current := 1
+visible := true
 
-; ── tray icon (bottom-right corner) ──────────────────────────────────────────
+; ── tray icon ─────────────────────────────────────────────────────────────────
 A_TrayMenu.Delete()
 A_TrayMenu.Add("Show/Hide", ToggleWindow)
 A_TrayMenu.Add("Exit", (*) => ExitApp())
 A_TrayMenu.Default := "Show/Hide"
-TrayTip("GameCycle", "Running — right-click tray icon to exit", 2)
 
 ; ── window ────────────────────────────────────────────────────────────────────
-MyGui := Gui("+AlwaysOnTop -Caption +ToolWindow +LastFound")
+MyGui := Gui("+AlwaysOnTop -Caption +ToolWindow")
 MyGui.BackColor := "000000"
-MyGui.MarginX   := 6
-MyGui.MarginY   := 5
+MyGui.MarginX   := 0
+MyGui.MarginY   := 0
 
 textControls := []
-xPos := 6
+xPos := 8
 for i, item in ITEMS {
     if (i > 1) {
-        sep := MyGui.Add("Text", "x" xPos " y5 w8 h16 cFFFFFF", "|")
+        sep := MyGui.Add("Text", "x" xPos " y6 w10 h16 cFFFFFF", "|")
         sep.SetFont("s9 bold", "Consolas")
-        xPos += 10
+        xPos += 12
     }
-    ctrl := MyGui.Add("Text", "x" xPos " y5 h16 c" (i = 1 ? "FFFF00" : "FFFFFF"), item)
+    ; fixed width: 9px per char is safe for Consolas s9 bold
+    w := StrLen(item) * 9 + 2
+    ctrl := MyGui.Add("Text", "x" xPos " y6 w" w " h16 c" (i = 1 ? "FFFF00" : "FFFFFF"), item)
     ctrl.SetFont("s9 bold", "Consolas")
     textControls.Push(ctrl)
-    xPos += StrLen(item) * 8 + 4
+    xPos += w
 }
 
-totalW := xPos + 6
-MyGui.Show("w" totalW " h26 x50 y50 NoActivate")
-
-; Keep on top even after losing focus
-WinSetAlwaysOnTop(1, MyGui.Hwnd)
+MyGui.Show("w" (xPos + 8) " h28 x50 y50 NoActivate")
 
 ; ── drag to move ──────────────────────────────────────────────────────────────
 OnMessage(0x0201, WM_LBUTTONDOWN)
@@ -43,15 +41,18 @@ WM_LBUTTONDOWN(*) {
     PostMessage(0x00A1, 2)
 }
 
-; Close button hides rather than exits (use tray to fully exit)
 MyGui.OnEvent("Close", (*) => MyGui.Hide())
 
-; ── toggle visibility ─────────────────────────────────────────────────────────
+; ── toggle via tray ───────────────────────────────────────────────────────────
 ToggleWindow(*) {
-    if WinExist("ahk_id " MyGui.Hwnd) && WinIsVisible("ahk_id " MyGui.Hwnd)
+    global visible
+    if visible {
         MyGui.Hide()
-    else
+        visible := false
+    } else {
         MyGui.Show("NoActivate")
+        visible := true
+    }
 }
 
 ; ── global hotkey: X cycles highlight ────────────────────────────────────────
