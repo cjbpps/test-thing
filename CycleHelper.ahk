@@ -1,49 +1,50 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 
-; ── config ──────────────────────────────────────────────────────────────────
 ITEMS   := ["After M", "Before M", "After O", "Before O"]
-current := 1   ; 1-indexed, starts highlighted on "After M"
+current := 1
 
-; ── window ──────────────────────────────────────────────────────────────────
 MyGui := Gui("+AlwaysOnTop -Caption +ToolWindow")
 MyGui.BackColor := "000000"
-MyGui.MarginX   := 10
-MyGui.MarginY   := 8
+MyGui.MarginX   := 6
+MyGui.MarginY   := 5
 
 textControls := []
+xPos := 6
 for i, item in ITEMS {
-    ctrl := MyGui.Add("Text", "w110 h18 c" (i = 1 ? "FFFF00" : "FFFFFF"), item)
-    ctrl.SetFont("s10 bold", "Consolas")
+    ; separator between items
+    if (i > 1) {
+        sep := MyGui.Add("Text", "x" xPos " y5 w6 h16 cFFFFFF", "|")
+        sep.SetFont("s9 bold", "Consolas")
+        xPos += 10
+    }
+    ctrl := MyGui.Add("Text", "x" xPos " y5 h16 c" (i = 1 ? "FFFF00" : "FFFFFF"), item)
+    ctrl.SetFont("s9 bold", "Consolas")
     textControls.Push(ctrl)
+    ; measure approximate width: ~8px per char at s9
+    xPos += StrLen(item) * 8 + 4
 }
 
-MyGui.Show("w130 h" (ITEMS.Length * 24 + 16) " x50 y50 NoActivate")
+totalW := xPos + 6
+MyGui.Show("w" totalW " h26 x50 y50 NoActivate")
 
-; thin border via WS_EX_CLIENTEDGE — skip, keep it flat and clean
-
-; ── drag to move ────────────────────────────────────────────────────────────
-MyGui.OnEvent("Size", GuiClose)
-OnMessage(0x0201, WM_LBUTTONDOWN)   ; WM_LBUTTONDOWN → drag
-
+; ── drag to move ─────────────────────────────────────────────────────────────
+OnMessage(0x0201, WM_LBUTTONDOWN)
 WM_LBUTTONDOWN(*) {
-    PostMessage(0x00A1, 2)           ; WM_NCLBUTTONDOWN HTCAPTION
+    PostMessage(0x00A1, 2)
 }
 
-; right-click closes
 OnMessage(0x0204, WM_RBUTTONDOWN)
 WM_RBUTTONDOWN(*) {
     ExitApp
 }
 
-GuiClose(*) {
-    ExitApp
-}
+MyGui.OnEvent("Close", (*) => ExitApp())
 
-; ── global hotkey: X cycles highlight ───────────────────────────────────────
+; ── global hotkey: X cycles highlight ────────────────────────────────────────
 ~x:: {
     global current
-    textControls[current].Opt("cFFFFFF")     ; deselect old
+    textControls[current].Opt("cFFFFFF")
     current := (current = ITEMS.Length) ? 1 : current + 1
-    textControls[current].Opt("cFFFF00")     ; highlight new
+    textControls[current].Opt("cFFFF00")
 }
