@@ -26,11 +26,14 @@
   const PRICE_REFRESH_MS = 5000;
   const POSITION_STORAGE_KEY = "paperflip-overlay-pos";
 
+  const SOL_BUY_PRESETS = [0.1, 0.5, 1, 5];
+
   let currentToken = null; // last resolved {tokenAddress, tokenSymbol, chain, priceUsd, site}
   let widgetEl = null;
   let minimized = false;
   let refreshTimer = null;
   let unsubscribeStorage = null;
+  let solPriceUsd = null;
 
   // ---------- boot ----------
 
@@ -113,7 +116,7 @@
       <div class="pf-ov-widget">
         <div class="pf-ov-header">
           <span class="pf-ov-brand">PaperFlip</span>
-          <span class="pf-ov-balance" id="pf-ov-balance">$0.00</span>
+          <span class="pf-ov-balance" id="pf-ov-balance" title="">◎0.000</span>
           <button class="pf-ov-min" id="pf-ov-min" title="Minimize">–</button>
         </div>
         <div class="pf-ov-body" id="pf-ov-body">
@@ -125,12 +128,16 @@
             </span>
           </div>
           <div class="pf-ov-positions" id="pf-ov-positions"></div>
-          <button id="pf-ov-instabuy" class="pf-ov-btn pf-ov-btn-instabuy">⚡ Insta Buy <span id="pf-ov-instabuy-amt">$100</span></button>
-          <div class="pf-ov-trade-row">
-            <input type="number" id="pf-ov-amount" class="pf-ov-input" placeholder="Custom amount USD" min="0" step="1" value="100" />
-            <button id="pf-ov-buy" class="pf-ov-btn pf-ov-btn-ghost">Buy</button>
+          <span class="pf-ov-section-label">Buy (SOL)</span>
+          <div class="pf-ov-preset-row" id="pf-ov-presets">
+            ${SOL_BUY_PRESETS.map((sol) => `<button class="pf-ov-btn pf-ov-btn-preset" data-sol="${sol}">${sol}</button>`).join("")}
           </div>
-          <div class="pf-ov-tpsl-row">
+          <div class="pf-ov-trade-row">
+            <input type="number" id="pf-ov-amount" class="pf-ov-input" placeholder="Custom SOL amount" min="0" step="0.01" />
+            <button id="pf-ov-buy" class="pf-ov-btn pf-ov-btn-buy">Buy</button>
+          </div>
+          <button class="pf-ov-collapse-toggle" id="pf-ov-tpsl-toggle">Take Profit / Stop Loss ▾</button>
+          <div class="pf-ov-tpsl-row" id="pf-ov-tpsl-row" hidden>
             <input type="number" id="pf-ov-tp" class="pf-ov-input pf-ov-input-sm" placeholder="TP %" />
             <input type="number" id="pf-ov-sl" class="pf-ov-input pf-ov-input-sm" placeholder="SL %" />
           </div>
@@ -144,12 +151,17 @@
       toggleMinimize();
     });
     wrap.querySelector("#pf-ov-buy").addEventListener("click", () => {
-      const amountUsd = Number(wrap.querySelector("#pf-ov-amount").value) || 0;
-      executeBuy(amountUsd);
+      const amountSol = Number(wrap.querySelector("#pf-ov-amount").value) || 0;
+      executeBuy(amountSol);
     });
-    wrap.querySelector("#pf-ov-instabuy").addEventListener("click", async () => {
-      const settings = await PaperFlipStorage.getSettings();
-      executeBuy(settings.instaBuyAmountUsd);
+    wrap.querySelectorAll(".pf-ov-btn-preset").forEach((btn) => {
+      btn.addEventListener("click", () => executeBuy(Number(btn.dataset.sol)));
+    });
+    wrap.querySelector("#pf-ov-tpsl-toggle").addEventListener("click", () => {
+      const row = wrap.querySelector("#pf-ov-tpsl-row");
+      const toggle = wrap.querySelector("#pf-ov-tpsl-toggle");
+      row.hidden = !row.hidden;
+      toggle.textContent = `Take Profit / Stop Loss ${row.hidden ? "▾" : "▴"}`;
     });
     return wrap;
   }
@@ -158,10 +170,12 @@
     if (!widgetEl || !currentToken) return;
 
     const settings = await PaperFlipStorage.getSettings();
-    widgetEl.querySelector("#pf-ov-balance").textContent = formatUsd(settings.currentBalance);
+    const solPrice = await getSolPriceUsd();
+    const balanceEl = widgetEl.querySelector("#pf-ov-balance");
+    balanceEl.textContent = solPrice ? formatSol(settings.currentBalance / solPrice) : "◎—";
+    balanceEl.title = formatUsd(settings.currentBalance);
     widgetEl.querySelector("#pf-ov-symbol").textContent = currentToken.tokenSymbol;
     widgetEl.querySelector("#pf-ov-price").textContent = formatPriceSmall(currentToken.priceUsd);
-    widgetEl.querySelector("#pf-ov-instabuy-amt").textContent = formatUsd(settings.instaBuyAmountUsd);
     flashLiveDot();
 
     if (settings.defaultTakeProfitPercent != null && !widgetEl.querySelector("#pf-ov-tp").value) {
@@ -179,9 +193,11 @@
     for (const t of openForToken) {
       const pnlUsd = t.amountTokens * currentToken.priceUsd - t.amountUsd;
       const pnlPct = t.amountUsd ? (pnlUsd / t.amountUsd) * 100 : 0;
+      const sizeLabel = t.amountSol != null ? formatSol(t.amountSol) : solPrice ? formatSol(t.amountUsd / solPrice) : "◎—";
       const row = document.createElement("div");
       row.className = "pf-ov-position";
       row.innerHTML = `
+        <span class="pf-ov-position-size">${sizeLabel}</span>
         <span class="${pnlUsd >= 0 ? "pf-ov-positive" : "pf-ov-negative"}">${formatUsd(pnlUsd)} (${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(1)}%)</span>
         <button class="pf-ov-btn pf-ov-btn-sell" data-id="${t.id}">Sell</button>
       `;
@@ -207,14 +223,21 @@
 
   // ---------- actions ----------
 
-  async function executeBuy(amountUsd) {
-    if (!currentToken || !amountUsd || amountUsd <= 0) return;
+  async function executeBuy(amountSol) {
+    if (!currentToken || !amountSol || amountSol <= 0) return;
     const tp = widgetEl.querySelector("#pf-ov-tp").value;
     const sl = widgetEl.querySelector("#pf-ov-sl").value;
 
+    const solPrice = await getSolPriceUsd();
+    if (!solPrice) {
+      showToast("SOL price unavailable right now — try again in a moment", "error");
+      return;
+    }
+    const amountUsd = amountSol * solPrice;
+
     const settings = await PaperFlipStorage.getSettings();
     if (amountUsd > settings.currentBalance) {
-      showToast(`Not enough virtual balance for ${formatUsd(amountUsd)}`, "error");
+      showToast(`Not enough virtual balance for ${formatSol(amountSol)} SOL`, "error");
       return;
     }
 
@@ -225,11 +248,12 @@
       site: currentToken.site,
       entryPrice: currentToken.priceUsd,
       amountUsd,
+      amountSol,
       takeProfitPercent: tp !== "" ? Number(tp) : null,
       stopLossPercent: sl !== "" ? Number(sl) : null,
     });
 
-    showToast(`Bought ${formatUsd(amountUsd)} of ${currentToken.tokenSymbol} @ ${formatPriceSmall(currentToken.priceUsd)}`, "success");
+    showToast(`Bought ${formatSol(amountSol)} SOL of ${currentToken.tokenSymbol} @ ${formatPriceSmall(currentToken.priceUsd)}`, "success");
     renderWidget();
     renderChartMarkers();
   }
@@ -367,12 +391,30 @@
     setTimeout(() => toast.remove(), 3000);
   }
 
+  // ---------- SOL price ----------
+
+  async function getSolPriceUsd() {
+    if (solPriceUsd) return solPriceUsd;
+    try {
+      const info = await PaperFlipPriceApi.getTokenPrice(PaperFlipPriceApi.SOL_MINT_ADDRESS);
+      solPriceUsd = info?.priceUsd || null;
+    } catch (err) {
+      solPriceUsd = null;
+    }
+    return solPriceUsd;
+  }
+
   // ---------- formatting ----------
 
   function formatUsd(n) {
     const v = Number(n) || 0;
     const sign = v < 0 ? "-" : "";
     return `${sign}$${Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function formatSol(n) {
+    const v = Number(n) || 0;
+    return `◎${v.toFixed(v < 1 ? 3 : 2)}`;
   }
 
   function formatPriceSmall(n) {

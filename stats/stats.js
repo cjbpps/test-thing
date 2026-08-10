@@ -486,7 +486,7 @@ async function getSolPriceUsd() {
 
 async function openWalletModal() {
   el.walletModal.hidden = false;
-  el.walletInstabuyInput.value = allSettings.instaBuyAmountUsd;
+  el.walletInstabuyInput.value = allSettings.instaBuyAmountSol;
   await renderWalletCurrent();
 }
 
@@ -723,7 +723,7 @@ function wireEvents() {
   el.walletInputUnit.addEventListener("change", updateWalletPreview);
   el.walletInstabuySave.addEventListener("click", async () => {
     const amt = Number(el.walletInstabuyInput.value) || 100;
-    await PaperFlipStorage.setSettings({ instaBuyAmountUsd: amt });
+    await PaperFlipStorage.setSettings({ instaBuyAmountSol: amt });
     await refresh();
   });
 

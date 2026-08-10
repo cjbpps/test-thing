@@ -18,7 +18,8 @@
     <div class="pf-balance-row">
       <div class="pf-balance-block">
         <span class="pf-label">Virtual Balance</span>
-        <span class="pf-balance" id="balance">$0.00</span>
+        <span class="pf-balance" id="balance">◎0.000</span>
+        <span class="pf-balance-usd-sub" id="balance-usd-sub"></span>
       </div>
       <div class="pf-balance-block pf-align-right">
         <span class="pf-label">Total PnL (all-time)</span>
@@ -44,10 +45,15 @@
       <span id="quick-symbol" class="pf-quick-symbol">—</span>
       <span id="quick-price" class="pf-quick-price">$0.00</span>
     </div>
-    <button id="quick-instabuy" class="pf-btn pf-btn-instabuy">⚡ Insta Buy <span id="quick-instabuy-amt">$100</span></button>
+    <div class="pf-preset-row" id="quick-presets">
+      <button class="pf-btn pf-btn-preset" data-sol="0.1">0.1</button>
+      <button class="pf-btn pf-btn-preset" data-sol="0.5">0.5</button>
+      <button class="pf-btn pf-btn-preset" data-sol="1">1</button>
+      <button class="pf-btn pf-btn-preset" data-sol="5">5</button>
+    </div>
     <div class="pf-quick-trade-row">
-      <input type="number" id="quick-amount" class="pf-input" placeholder="Custom amount USD" min="0" step="1" value="100" />
-      <button id="quick-buy" class="pf-btn pf-btn-ghost">Buy</button>
+      <input type="number" id="quick-amount" class="pf-input" placeholder="Custom SOL amount" min="0" step="0.01" />
+      <button id="quick-buy" class="pf-btn pf-btn-buy">Buy</button>
     </div>
   </section>
 

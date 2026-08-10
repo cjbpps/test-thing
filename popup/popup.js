@@ -13,6 +13,7 @@ let solPriceUsd = null;
 
 const el = {
   balance: document.getElementById("balance"),
+  balanceUsdSub: document.getElementById("balance-usd-sub"),
   totalPnl: document.getElementById("total-pnl"),
   totalPnlPct: document.getElementById("total-pnl-pct"),
   positionsList: document.getElementById("positions-list"),
@@ -21,10 +22,9 @@ const el = {
   quickTrade: document.getElementById("quick-trade"),
   quickSymbol: document.getElementById("quick-symbol"),
   quickPrice: document.getElementById("quick-price"),
+  quickPresets: document.getElementById("quick-presets"),
   quickAmount: document.getElementById("quick-amount"),
   quickBuy: document.getElementById("quick-buy"),
-  quickInstabuy: document.getElementById("quick-instabuy"),
-  quickInstabuyAmt: document.getElementById("quick-instabuy-amt"),
   viewStats: document.getElementById("view-stats"),
   walletToggle: document.getElementById("wallet-toggle"),
   walletPanel: document.getElementById("wallet-panel"),
@@ -59,14 +59,20 @@ function formatPriceSmall(n) {
   return `$${v.toFixed(4)}`;
 }
 
+function formatSol(n) {
+  const v = Number(n) || 0;
+  return `◎${v.toFixed(v < 1 ? 3 : 2)}`;
+}
+
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
 async function render() {
   const [trades, settings] = await Promise.all([PaperFlipStorage.getTrades(), PaperFlipStorage.getSettings()]);
-  el.balance.textContent = formatUsd(settings.currentBalance);
-  el.quickInstabuyAmt.textContent = formatUsd(settings.instaBuyAmountUsd);
+  const solPrice = await getSolPriceUsd();
+  el.balance.textContent = solPrice ? formatSol(settings.currentBalance / solPrice) : "◎—";
+  el.balanceUsdSub.textContent = solPrice ? formatUsd(settings.currentBalance) : "SOL price unavailable";
 
   const realized = PaperFlipStats.totalRealizedPnl(trades);
   const open = trades.filter((t) => t.status === "open");
@@ -95,12 +101,12 @@ async function render() {
   el.totalPnlPct.className = `pf-pnl-pct ${pnlClass(totalPnlPct)}`;
 
   el.positionsCount.textContent = String(open.length);
-  renderPositions(open, livePrices);
+  renderPositions(open, livePrices, solPrice);
 
   if (!el.walletPanel.hidden) renderWalletPanel(settings);
 }
 
-function renderPositions(open, livePrices) {
+function renderPositions(open, livePrices, solPrice) {
   el.positionsList.querySelectorAll(".pf-position").forEach((n) => n.remove());
   el.positionsEmpty.hidden = open.length > 0;
 
@@ -109,6 +115,7 @@ function renderPositions(open, livePrices) {
     const livePrice = info?.priceUsd || t.entryPrice;
     const unrealizedUsd = t.amountTokens * livePrice - t.amountUsd;
     const unrealizedPct = t.amountUsd ? (unrealizedUsd / t.amountUsd) * 100 : 0;
+    const sizeLabel = t.amountSol != null ? formatSol(t.amountSol) : solPrice ? formatSol(t.amountUsd / solPrice) : "◎—";
 
     const row = document.createElement("div");
     row.className = "pf-position";
@@ -119,7 +126,7 @@ function renderPositions(open, livePrices) {
           <span class="pf-position-site">${escapeHtml(t.site)}</span>
         </div>
         <div class="pf-position-prices">
-          <span>Entry ${formatPriceSmall(t.entryPrice)}</span>
+          <span>${sizeLabel}</span>
           <span>Now ${formatPriceSmall(livePrice)}</span>
         </div>
       </div>
@@ -163,15 +170,18 @@ function queryActiveTabToken() {
   });
 }
 
-async function executeQuickBuy(amountUsd) {
-  if (!currentToken || !amountUsd || amountUsd <= 0) return;
+async function executeQuickBuy(amountSol) {
+  if (!currentToken || !amountSol || amountSol <= 0) return;
+  const solPrice = await getSolPriceUsd();
+  if (!solPrice) return;
   await PaperFlipStorage.openTrade({
     tokenAddress: currentToken.tokenAddress,
     tokenSymbol: currentToken.tokenSymbol,
     chain: currentToken.chain,
     site: currentToken.site,
     entryPrice: currentToken.priceUsd,
-    amountUsd,
+    amountUsd: amountSol * solPrice,
+    amountSol,
   });
   openChartTab(currentToken);
   await render();
@@ -186,23 +196,24 @@ async function setupQuickTrade() {
   el.quickPrice.textContent = formatPriceSmall(currentToken.priceUsd);
 
   el.quickBuy.addEventListener("click", async () => {
-    const amountUsd = Number(el.quickAmount.value) || 0;
+    const amountSol = Number(el.quickAmount.value) || 0;
     el.quickBuy.disabled = true;
     try {
-      await executeQuickBuy(amountUsd);
+      await executeQuickBuy(amountSol);
     } finally {
       el.quickBuy.disabled = false;
     }
   });
 
-  el.quickInstabuy.addEventListener("click", async () => {
-    el.quickInstabuy.disabled = true;
-    try {
-      const settings = await PaperFlipStorage.getSettings();
-      await executeQuickBuy(settings.instaBuyAmountUsd);
-    } finally {
-      el.quickInstabuy.disabled = false;
-    }
+  el.quickPresets.querySelectorAll(".pf-btn-preset").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        await executeQuickBuy(Number(btn.dataset.sol));
+      } finally {
+        btn.disabled = false;
+      }
+    });
   });
 }
 

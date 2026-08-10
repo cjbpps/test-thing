@@ -157,6 +157,10 @@
   gap: 6px !important;
 }
 
+.pf-ov-tpsl-row[hidden] {
+  display: none !important;
+}
+
 .pf-ov-input {
   flex: 1 !important;
   background: #0d1117 !important;
@@ -190,18 +194,47 @@
 .pf-ov-btn-buy {
   background: #2ed573 !important;
   color: #05130a !important;
-  width: 100% !important;
-  padding: 8px 10px !important;
+  flex: 0 0 auto !important;
+  padding: 8px 14px !important;
   font-size: 12.5px !important;
 }
 
-.pf-ov-btn-instabuy {
+.pf-ov-section-label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.4px !important;
+  color: #8b949e !important;
+}
+
+.pf-ov-preset-row {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 6px !important;
+}
+
+.pf-ov-btn-preset {
   background: linear-gradient(135deg, #f0c14b, #e0a52e) !important;
   color: #241a05 !important;
-  width: 100% !important;
-  padding: 9px 10px !important;
-  font-size: 13px !important;
+  padding: 7px 0 !important;
+  font-size: 12px !important;
   font-weight: 800 !important;
+}
+
+.pf-ov-collapse-toggle {
+  background: transparent !important;
+  border: none !important;
+  color: #8b949e !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  text-align: left !important;
+  padding: 2px 0 !important;
+  cursor: pointer !important;
+}
+
+.pf-ov-position-size {
+  font-weight: 700 !important;
+  color: #e6edf3 !important;
 }
 
 .pf-ov-btn-sell {
