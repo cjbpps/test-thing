@@ -1,0 +1,312 @@
+:root {
+  --pf-bg: #0d1117;
+  --pf-bg-elevated: #161b22;
+  --pf-border: #262c36;
+  --pf-text: #e6edf3;
+  --pf-text-dim: #8b949e;
+  --pf-green: #2ed573;
+  --pf-red: #ff4757;
+  --pf-accent: #58a6ff;
+  --pf-radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  width: 360px;
+  background: var(--pf-bg);
+  color: var(--pf-text);
+  font-family: "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+}
+
+.pf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--pf-border);
+}
+
+.pf-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pf-brand-mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--pf-green), #1e9650);
+  color: #05130a;
+  font-weight: 800;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pf-brand-name {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.pf-badge-sim {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--pf-text-dim);
+  border: 1px solid var(--pf-border);
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+
+.pf-balance-card {
+  margin: 12px 14px;
+  padding: 14px;
+  background: var(--pf-bg-elevated);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+}
+
+.pf-balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.pf-balance-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pf-align-right {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.pf-label {
+  font-size: 10.5px;
+  color: var(--pf-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pf-balance {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-pnl {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-pnl-pct {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.pf-positive {
+  color: var(--pf-green);
+}
+
+.pf-negative {
+  color: var(--pf-red);
+}
+
+.pf-positions {
+  margin: 0 14px 12px;
+}
+
+.pf-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--pf-text-dim);
+  margin-bottom: 8px;
+}
+
+.pf-count {
+  background: var(--pf-bg-elevated);
+  border: 1px solid var(--pf-border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  color: var(--pf-text);
+}
+
+.pf-positions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.pf-empty {
+  color: var(--pf-text-dim);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 4px 0;
+}
+
+.pf-position {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--pf-bg-elevated);
+  border: 1px solid var(--pf-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.pf-position-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pf-position-token {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pf-position-symbol {
+  font-weight: 700;
+}
+
+.pf-position-site {
+  font-size: 10px;
+  color: var(--pf-text-dim);
+  text-transform: capitalize;
+}
+
+.pf-position-prices {
+  display: flex;
+  gap: 10px;
+  font-size: 10.5px;
+  color: var(--pf-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-position-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.pf-pnl-small {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-pnl-pct-small {
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.pf-quick-trade {
+  margin: 0 14px 12px;
+  padding: 10px;
+  background: var(--pf-bg-elevated);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+}
+
+.pf-quick-trade-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.pf-quick-trade-row:first-of-type {
+  margin-top: 0;
+}
+
+.pf-quick-symbol {
+  font-weight: 700;
+}
+
+.pf-quick-price {
+  color: var(--pf-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-input {
+  flex: 1;
+  background: var(--pf-bg);
+  border: 1px solid var(--pf-border);
+  border-radius: 6px;
+  color: var(--pf-text);
+  padding: 6px 8px;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.pf-footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--pf-border);
+}
+
+.pf-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.pf-btn:hover {
+  filter: brightness(1.1);
+}
+
+.pf-btn-primary {
+  flex: 1;
+  background: var(--pf-accent);
+  color: #061626;
+}
+
+.pf-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--pf-border);
+  color: var(--pf-text-dim);
+}
+
+.pf-btn-danger {
+  background: var(--pf-red);
+  color: #2a0505;
+  border-color: var(--pf-red);
+}
+
+.pf-btn-buy {
+  background: var(--pf-green);
+  color: #05130a;
+  padding: 6px 14px;
+}
+
+.pf-btn-sell {
+  background: var(--pf-red);
+  color: #2a0505;
+  padding: 4px 10px;
+  font-size: 11px;
+}

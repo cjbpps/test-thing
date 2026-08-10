@@ -1,0 +1,239 @@
+/* PaperFlip content-script overlay — namespaced under #paperflip-overlay-root
+   with !important on layout-critical properties so host page styles can't
+   crush it. */
+
+#paperflip-overlay-root,
+#paperflip-overlay-root * {
+  all: revert;
+  box-sizing: border-box !important;
+  font-family: "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+#paperflip-overlay-root {
+  position: fixed !important;
+  z-index: 2147483000 !important;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+}
+
+.pf-ov-widget {
+  position: fixed !important;
+  top: 88px !important;
+  right: 16px !important;
+  width: 240px !important;
+  background: #0d1117 !important;
+  border: 1px solid #262c36 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  color: #e6edf3 !important;
+  font-size: 12px !important;
+  overflow: hidden !important;
+}
+
+.pf-ov-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 10px !important;
+  background: #161b22 !important;
+  border-bottom: 1px solid #262c36 !important;
+  cursor: grab !important;
+  user-select: none !important;
+}
+
+.pf-ov-header:active {
+  cursor: grabbing !important;
+}
+
+.pf-ov-brand {
+  font-weight: 800 !important;
+  font-size: 11px !important;
+  color: #2ed573 !important;
+  letter-spacing: 0.3px !important;
+}
+
+.pf-ov-balance {
+  margin-left: auto !important;
+  font-weight: 700 !important;
+  font-variant-numeric: tabular-nums !important;
+  font-size: 11px !important;
+}
+
+.pf-ov-min {
+  background: transparent !important;
+  border: 1px solid #262c36 !important;
+  color: #8b949e !important;
+  width: 18px !important;
+  height: 18px !important;
+  line-height: 1 !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  padding: 0 !important;
+}
+
+.pf-ov-body {
+  padding: 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.pf-ov-token-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: baseline !important;
+}
+
+.pf-ov-symbol {
+  font-weight: 800 !important;
+  font-size: 14px !important;
+}
+
+.pf-ov-price {
+  font-variant-numeric: tabular-nums !important;
+  color: #8b949e !important;
+  font-size: 11px !important;
+}
+
+.pf-ov-positions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.pf-ov-position {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #161b22 !important;
+  border: 1px solid #262c36 !important;
+  border-radius: 6px !important;
+  padding: 5px 7px !important;
+  font-size: 11px !important;
+}
+
+.pf-ov-positive {
+  color: #2ed573 !important;
+}
+
+.pf-ov-negative {
+  color: #ff4757 !important;
+}
+
+.pf-ov-trade-row,
+.pf-ov-tpsl-row {
+  display: flex !important;
+  gap: 6px !important;
+}
+
+.pf-ov-input {
+  flex: 1 !important;
+  background: #0d1117 !important;
+  border: 1px solid #262c36 !important;
+  border-radius: 6px !important;
+  color: #e6edf3 !important;
+  padding: 6px 8px !important;
+  font-size: 11.5px !important;
+  min-width: 0 !important;
+}
+
+.pf-ov-input-sm {
+  flex: 1 !important;
+}
+
+.pf-ov-btn {
+  border: none !important;
+  border-radius: 7px !important;
+  padding: 6px 10px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+
+.pf-ov-btn-ghost {
+  background: #161b22 !important;
+  border: 1px solid #262c36 !important;
+  color: #8b949e !important;
+}
+
+.pf-ov-btn-buy {
+  background: #2ed573 !important;
+  color: #05130a !important;
+  width: 100% !important;
+  padding: 8px 10px !important;
+  font-size: 12.5px !important;
+}
+
+.pf-ov-btn-sell {
+  background: #ff4757 !important;
+  color: #2a0505 !important;
+  padding: 3px 8px !important;
+  font-size: 10.5px !important;
+}
+
+.pf-ov-toast-stack {
+  position: fixed !important;
+  top: 88px !important;
+  right: 268px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  z-index: 2147483000 !important;
+  pointer-events: none !important;
+}
+
+.pf-ov-toast {
+  background: #161b22 !important;
+  border: 1px solid #262c36 !important;
+  border-left: 3px solid #58a6ff !important;
+  color: #e6edf3 !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  font-size: 11.5px !important;
+  max-width: 240px !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
+  opacity: 1 !important;
+  transition: opacity 0.35s ease, transform 0.35s ease !important;
+}
+
+.pf-ov-toast-success {
+  border-left-color: #2ed573 !important;
+}
+
+.pf-ov-toast-error {
+  border-left-color: #ff4757 !important;
+}
+
+.pf-ov-toast-out {
+  opacity: 0 !important;
+  transform: translateX(12px) !important;
+}
+
+.pf-ov-chart-markers {
+  position: absolute !important;
+  top: 8px !important;
+  left: 8px !important;
+  display: flex !important;
+  gap: 4px !important;
+  z-index: 999 !important;
+  pointer-events: none !important;
+  font-size: 13px !important;
+  background: rgba(13, 17, 23, 0.6) !important;
+  border-radius: 6px !important;
+  padding: 3px 6px !important;
+}
+
+.pf-ov-marker-buy {
+  color: #58a6ff !important;
+}
+
+.pf-ov-marker-win {
+  color: #2ed573 !important;
+}
+
+.pf-ov-marker-loss {
+  color: #ff4757 !important;
+}

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PaperFlip</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="pf-header">
+    <div class="pf-brand">
+      <span class="pf-brand-mark">PF</span>
+      <span class="pf-brand-name">PaperFlip</span>
+    </div>
+    <span class="pf-badge-sim">SIM</span>
+  </header>
+
+  <section class="pf-balance-card">
+    <div class="pf-balance-row">
+      <div class="pf-balance-block">
+        <span class="pf-label">Virtual Balance</span>
+        <span class="pf-balance" id="balance">$0.00</span>
+      </div>
+      <div class="pf-balance-block pf-align-right">
+        <span class="pf-label">Total PnL (all-time)</span>
+        <span class="pf-pnl" id="total-pnl">$0.00</span>
+        <span class="pf-pnl-pct" id="total-pnl-pct">0.00%</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="pf-positions">
+    <div class="pf-section-head">
+      <span>Open Positions</span>
+      <span class="pf-count" id="positions-count">0</span>
+    </div>
+    <div id="positions-list" class="pf-positions-list">
+      <p class="pf-empty" id="positions-empty">No open positions. Head to a supported terminal to start paper trading.</p>
+    </div>
+  </section>
+
+  <section class="pf-quick-trade" id="quick-trade" hidden>
+    <div class="pf-section-head"><span>Quick Trade (this tab's token)</span></div>
+    <div class="pf-quick-trade-row">
+      <span id="quick-symbol" class="pf-quick-symbol">—</span>
+      <span id="quick-price" class="pf-quick-price">$0.00</span>
+    </div>
+    <div class="pf-quick-trade-row">
+      <input type="number" id="quick-amount" class="pf-input" placeholder="Amount USD" min="0" step="1" value="100" />
+      <button id="quick-buy" class="pf-btn pf-btn-buy">Buy</button>
+    </div>
+  </section>
+
+  <footer class="pf-footer">
+    <button id="view-stats" class="pf-btn pf-btn-primary">View Full Stats</button>
+    <button id="reset-balance" class="pf-btn pf-btn-ghost">Reset Balance</button>
+  </footer>
+
+  <script src="../lib/storage.js"></script>
+  <script src="../lib/price-api.js"></script>
+  <script src="../lib/stats-calculations.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

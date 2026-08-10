@@ -1,0 +1,77 @@
+{
+  "manifest_version": 3,
+  "name": "PaperFlip - Memecoin Paper Trading",
+  "short_name": "PaperFlip",
+  "version": "0.1.0",
+  "description": "Paper-trade memecoins on real trading terminals with a virtual balance. No wallet, no real funds — practice reps and stats only.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "PaperFlip"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "activeTab", "scripting", "alarms"],
+  "host_permissions": [
+    "https://axiom.trade/*",
+    "https://*.axiom.trade/*",
+    "https://gmgn.ai/*",
+    "https://*.gmgn.ai/*",
+    "https://photon-sol.tinyastro.io/*",
+    "https://bullx.io/*",
+    "https://*.bullx.io/*",
+    "https://padre.gg/*",
+    "https://*.padre.gg/*",
+    "https://dexscreener.com/*",
+    "https://*.dexscreener.com/*",
+    "https://api.dexscreener.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://axiom.trade/*", "https://*.axiom.trade/*"],
+      "js": ["lib/storage.js", "lib/price-api.js", "content-scripts/site-adapters/axiom.js", "content-scripts/overlay.js"],
+      "css": ["content-scripts/overlay.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://gmgn.ai/*", "https://*.gmgn.ai/*"],
+      "js": ["lib/storage.js", "lib/price-api.js", "content-scripts/site-adapters/gmgn.js", "content-scripts/overlay.js"],
+      "css": ["content-scripts/overlay.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://photon-sol.tinyastro.io/*"],
+      "js": ["lib/storage.js", "lib/price-api.js", "content-scripts/site-adapters/photon.js", "content-scripts/overlay.js"],
+      "css": ["content-scripts/overlay.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://bullx.io/*", "https://*.bullx.io/*"],
+      "js": ["lib/storage.js", "lib/price-api.js", "content-scripts/site-adapters/bullx.js", "content-scripts/overlay.js"],
+      "css": ["content-scripts/overlay.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://padre.gg/*", "https://*.padre.gg/*"],
+      "js": ["lib/storage.js", "lib/price-api.js", "content-scripts/site-adapters/padre.js", "content-scripts/overlay.js"],
+      "css": ["content-scripts/overlay.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://dexscreener.com/*", "https://*.dexscreener.com/*"],
+      "js": ["lib/storage.js", "lib/price-api.js", "content-scripts/site-adapters/dexscreener.js", "content-scripts/overlay.js"],
+      "css": ["content-scripts/overlay.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

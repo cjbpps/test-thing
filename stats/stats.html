@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PaperFlip — Stats</title>
+  <link rel="stylesheet" href="stats.css" />
+</head>
+<body class="pf-stats">
+  <header class="pf-stats-header">
+    <div class="pf-stats-title">
+      <h1>PaperFlip <span>Stats</span></h1>
+      <p class="pf-subtitle">100% simulated paper trading — no wallet connection, no real funds, ever.</p>
+    </div>
+    <div class="pf-stats-header-right">
+      <div class="pf-balance-pill">
+        <span class="pf-label">Virtual Balance</span>
+        <span id="hdr-balance">$0.00</span>
+      </div>
+      <button id="dev-toggle" class="pf-btn pf-btn-ghost pf-btn-sm" title="Toggle dev tools">⚙ Dev tools</button>
+    </div>
+  </header>
+
+  <section id="dev-panel" class="pf-dev-panel" hidden>
+    <span class="pf-dev-label">Dev tools (mock data for visual testing only):</span>
+    <button id="seed-data" class="pf-btn pf-btn-sm pf-btn-primary">Seed 40 mock trades</button>
+    <button id="clear-data" class="pf-btn pf-btn-sm pf-btn-danger">Wipe all trades</button>
+  </section>
+
+  <main>
+    <section class="pf-hero-cards">
+      <div class="pf-card pf-hero">
+        <span class="pf-label">Win Rate</span>
+        <span class="pf-hero-value" id="stat-winrate">—</span>
+        <span class="pf-hero-sub" id="stat-winrate-sub">0W / 0L</span>
+      </div>
+      <div class="pf-card pf-hero">
+        <span class="pf-label">Avg Hold Time</span>
+        <span class="pf-hero-value" id="stat-avghold">—</span>
+        <span class="pf-hero-sub" id="stat-medianhold-sub">median —</span>
+      </div>
+      <div class="pf-card pf-hero">
+        <span class="pf-label">Total Realized PnL</span>
+        <span class="pf-hero-value" id="stat-pnl">—</span>
+        <span class="pf-hero-sub" id="stat-pnl-pct">0.00%</span>
+      </div>
+      <div class="pf-card pf-hero">
+        <span class="pf-label">Current Streak</span>
+        <span class="pf-hero-value" id="stat-streak">—</span>
+        <span class="pf-hero-sub" id="stat-streak-sub">no closed trades yet</span>
+      </div>
+    </section>
+
+    <section class="pf-summary-grid">
+      <div class="pf-card pf-small"><span class="pf-label">Total Trades</span><span class="pf-value" id="stat-total-trades">0</span></div>
+      <div class="pf-card pf-small"><span class="pf-label">Open Positions</span><span class="pf-value" id="stat-open-positions">0</span></div>
+      <div class="pf-card pf-small"><span class="pf-label">Best Trade</span><span class="pf-value" id="stat-best">—</span></div>
+      <div class="pf-card pf-small"><span class="pf-label">Worst Trade</span><span class="pf-value" id="stat-worst">—</span></div>
+      <div class="pf-card pf-small"><span class="pf-label">Profit Factor</span><span class="pf-value" id="stat-profit-factor">—</span></div>
+      <div class="pf-card pf-small"><span class="pf-label">Avg Win / Avg Loss</span><span class="pf-value" id="stat-avg-win-loss">—</span></div>
+      <div class="pf-card pf-small"><span class="pf-label">Win / Loss Ratio</span><span class="pf-value" id="stat-win-loss-ratio">—</span></div>
+      <div class="pf-card pf-small"><span class="pf-label">Avg Position Size</span><span class="pf-value" id="stat-avg-position">—</span></div>
+    </section>
+
+    <section class="pf-charts-row">
+      <div class="pf-card pf-chart-card pf-chart-wide">
+        <span class="pf-card-title">Equity Curve</span>
+        <div class="pf-chart-canvas-wrap"><canvas id="chart-equity"></canvas></div>
+      </div>
+      <div class="pf-card pf-chart-card">
+        <span class="pf-card-title">Win / Loss</span>
+        <div class="pf-chart-canvas-wrap"><canvas id="chart-winloss"></canvas></div>
+      </div>
+    </section>
+
+    <section class="pf-charts-row">
+      <div class="pf-card pf-chart-card pf-chart-wide">
+        <span class="pf-card-title">PnL by Hold-Time Bucket</span>
+        <div class="pf-chart-canvas-wrap"><canvas id="chart-holdbucket"></canvas></div>
+      </div>
+      <div class="pf-card pf-chart-card">
+        <span class="pf-card-title">Trades by Site</span>
+        <div class="pf-chart-canvas-wrap"><canvas id="chart-site"></canvas></div>
+      </div>
+      <div class="pf-card pf-chart-card">
+        <span class="pf-card-title">Trades by Chain</span>
+        <div class="pf-chart-canvas-wrap"><canvas id="chart-chain"></canvas></div>
+      </div>
+    </section>
+
+    <section class="pf-card pf-table-section">
+      <div class="pf-table-toolbar">
+        <input type="search" id="filter-search" class="pf-input" placeholder="Search token symbol or address…" />
+        <select id="filter-site" class="pf-select"><option value="">All sites</option></select>
+        <select id="filter-chain" class="pf-select"><option value="">All chains</option></select>
+        <select id="filter-status" class="pf-select">
+          <option value="">All status</option>
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+        </select>
+        <span class="pf-table-count" id="table-count"></span>
+      </div>
+      <div class="pf-table-wrap">
+        <table class="pf-table" id="trades-table">
+          <thead>
+            <tr>
+              <th data-sort="tokenSymbol">Token</th>
+              <th data-sort="entryTimestamp">Entry</th>
+              <th data-sort="exitTimestamp">Exit</th>
+              <th data-sort="holdMs">Hold</th>
+              <th data-sort="amountUsd">Amount</th>
+              <th data-sort="pnlUsd">PnL $</th>
+              <th data-sort="pnlPercent">PnL %</th>
+              <th data-sort="site">Site</th>
+              <th data-sort="status">Status</th>
+            </tr>
+          </thead>
+          <tbody id="trades-tbody"></tbody>
+        </table>
+        <p class="pf-empty" id="table-empty" hidden>No trades match your filters yet.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="../lib/chart.min.js"></script>
+  <script src="../lib/storage.js"></script>
+  <script src="../lib/price-api.js"></script>
+  <script src="../lib/stats-calculations.js"></script>
+  <script src="stats.js"></script>
+</body>
+</html>

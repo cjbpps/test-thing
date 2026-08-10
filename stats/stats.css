@@ -1,0 +1,383 @@
+:root {
+  --pf-bg: #0a0e14;
+  --pf-bg-elevated: #131922;
+  --pf-bg-elevated-2: #1a2230;
+  --pf-border: #232b38;
+  --pf-text: #e6edf3;
+  --pf-text-dim: #8b949e;
+  --pf-text-dimmer: #5b6572;
+  --pf-green: #2ed573;
+  --pf-red: #ff4757;
+  --pf-accent: #58a6ff;
+  --pf-yellow: #f0c14b;
+  --pf-radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body.pf-stats {
+  margin: 0;
+  background: var(--pf-bg);
+  color: var(--pf-text);
+  font-family: "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+}
+
+.pf-stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.pf-stats-title h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.pf-stats-title h1 span {
+  color: var(--pf-accent);
+  font-weight: 600;
+}
+
+.pf-subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--pf-text-dimmer);
+}
+
+.pf-stats-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pf-balance-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: var(--pf-bg-elevated);
+  border: 1px solid var(--pf-border);
+  border-radius: 999px;
+  padding: 6px 16px;
+}
+
+.pf-balance-pill #hdr-balance {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+}
+
+.pf-dev-panel {
+  max-width: 1280px;
+  margin: 0 auto 16px;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #241a12;
+  border-top: 1px solid #4a3419;
+  border-bottom: 1px solid #4a3419;
+}
+
+.pf-dev-label {
+  font-size: 12px;
+  color: var(--pf-yellow);
+  font-weight: 600;
+}
+
+.pf-label {
+  font-size: 10.5px;
+  color: var(--pf-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  display: block;
+}
+
+.pf-card {
+  background: var(--pf-bg-elevated);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  padding: 16px;
+}
+
+.pf-hero-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.pf-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pf-hero-value {
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-hero-sub {
+  font-size: 11.5px;
+  color: var(--pf-text-dim);
+}
+
+.pf-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.pf-small {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+}
+
+.pf-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-positive {
+  color: var(--pf-green);
+}
+
+.pf-negative {
+  color: var(--pf-red);
+}
+
+.pf-charts-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.pf-charts-row:nth-of-type(3) {
+  grid-template-columns: 1.6fr 1fr 1fr;
+}
+
+.pf-chart-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pf-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pf-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.pf-chart-canvas-wrap {
+  position: relative;
+  height: 220px;
+}
+
+.pf-table-section {
+  padding: 16px;
+}
+
+.pf-table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.pf-input,
+.pf-select {
+  background: var(--pf-bg);
+  border: 1px solid var(--pf-border);
+  border-radius: 8px;
+  color: var(--pf-text);
+  padding: 8px 10px;
+  font-size: 12.5px;
+}
+
+.pf-input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.pf-table-count {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--pf-text-dimmer);
+}
+
+.pf-table-wrap {
+  overflow-x: auto;
+}
+
+.pf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.pf-table thead th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--pf-text-dim);
+  font-weight: 700;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid var(--pf-border);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.pf-table thead th:hover {
+  color: var(--pf-text);
+}
+
+.pf-table thead th.pf-sorted::after {
+  content: attr(data-arrow);
+  margin-left: 4px;
+  color: var(--pf-accent);
+}
+
+.pf-table tbody tr.pf-row {
+  cursor: pointer;
+  border-bottom: 1px solid var(--pf-border);
+}
+
+.pf-table tbody tr.pf-row:hover {
+  background: var(--pf-bg-elevated-2);
+}
+
+.pf-table td {
+  padding: 9px 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pf-token-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.pf-status-pill {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+}
+
+.pf-status-open {
+  background: rgba(88, 166, 255, 0.15);
+  color: var(--pf-accent);
+}
+
+.pf-status-closed {
+  background: rgba(139, 148, 158, 0.15);
+  color: var(--pf-text-dim);
+}
+
+.pf-detail-row td {
+  background: var(--pf-bg);
+  white-space: normal;
+  padding: 12px 16px;
+}
+
+.pf-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  font-size: 12px;
+}
+
+.pf-detail-grid div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pf-detail-grid span:first-child {
+  color: var(--pf-text-dimmer);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.pf-empty {
+  color: var(--pf-text-dim);
+  font-size: 12.5px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.pf-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.pf-btn:hover {
+  filter: brightness(1.1);
+}
+
+.pf-btn-sm {
+  padding: 6px 12px;
+  font-size: 11.5px;
+}
+
+.pf-btn-primary {
+  background: var(--pf-accent);
+  color: #061626;
+}
+
+.pf-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--pf-border);
+  color: var(--pf-text-dim);
+}
+
+.pf-btn-danger {
+  background: var(--pf-red);
+  color: #2a0505;
+}
+
+@media (max-width: 980px) {
+  .pf-hero-cards,
+  .pf-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pf-charts-row,
+  .pf-charts-row:nth-of-type(3) {
+    grid-template-columns: 1fr;
+  }
+}
