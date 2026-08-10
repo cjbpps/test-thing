@@ -1,13 +1,15 @@
 /*
  * PaperFlip — popup/popup.js
  * Quick-glance surface: balance, total PnL, open positions with live PnL,
- * a quick-buy shortcut for whatever token the active tab is on, and links
- * out to the full Stats page. Kept deliberately light so it opens instantly.
+ * an insta-buy/quick-buy shortcut for whatever token the active tab is on,
+ * a wallet manager, and a link out to the full Stats page. Kept
+ * deliberately light so it opens instantly.
  */
 
-const PRICE_REFRESH_MS = 10000;
+const PRICE_REFRESH_MS = 8000;
 let refreshTimer = null;
-let resetArmed = false;
+let currentToken = null; // last resolved token info from the active tab's content script
+let solPriceUsd = null;
 
 const el = {
   balance: document.getElementById("balance"),
@@ -21,8 +23,18 @@ const el = {
   quickPrice: document.getElementById("quick-price"),
   quickAmount: document.getElementById("quick-amount"),
   quickBuy: document.getElementById("quick-buy"),
+  quickInstabuy: document.getElementById("quick-instabuy"),
+  quickInstabuyAmt: document.getElementById("quick-instabuy-amt"),
   viewStats: document.getElementById("view-stats"),
-  resetBalance: document.getElementById("reset-balance"),
+  walletToggle: document.getElementById("wallet-toggle"),
+  walletPanel: document.getElementById("wallet-panel"),
+  walletCurrent: document.getElementById("wallet-current"),
+  walletSolSub: document.getElementById("wallet-sol-sub"),
+  walletAmount: document.getElementById("wallet-amount"),
+  walletUnit: document.getElementById("wallet-unit"),
+  walletPreview: document.getElementById("wallet-preview"),
+  walletApply: document.getElementById("wallet-apply"),
+  walletQuickReset: document.getElementById("wallet-quick-reset"),
 };
 
 function formatUsd(n) {
@@ -40,9 +52,21 @@ function pnlClass(n) {
   return (Number(n) || 0) >= 0 ? "pf-positive" : "pf-negative";
 }
 
+function formatPriceSmall(n) {
+  const v = Number(n) || 0;
+  if (v === 0) return "$0";
+  if (v < 0.01) return `$${v.toFixed(8).replace(/0+$/, "")}`;
+  return `$${v.toFixed(4)}`;
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
 async function render() {
   const [trades, settings] = await Promise.all([PaperFlipStorage.getTrades(), PaperFlipStorage.getSettings()]);
   el.balance.textContent = formatUsd(settings.currentBalance);
+  el.quickInstabuyAmt.textContent = formatUsd(settings.instaBuyAmountUsd);
 
   const realized = PaperFlipStats.totalRealizedPnl(trades);
   const open = trades.filter((t) => t.status === "open");
@@ -72,6 +96,8 @@ async function render() {
 
   el.positionsCount.textContent = String(open.length);
   renderPositions(open, livePrices);
+
+  if (!el.walletPanel.hidden) renderWalletPanel(settings);
 }
 
 function renderPositions(open, livePrices) {
@@ -108,40 +134,8 @@ function renderPositions(open, livePrices) {
   }
 }
 
-function formatPriceSmall(n) {
-  const v = Number(n) || 0;
-  if (v === 0) return "$0";
-  if (v < 0.01) return `$${v.toFixed(8).replace(/0+$/, "")}`;
-  return `$${v.toFixed(4)}`;
-}
-
-function escapeHtml(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-
 async function sellPosition(tradeId, livePrice) {
   await PaperFlipStorage.closeTrade(tradeId, livePrice);
-  await render();
-}
-
-async function handleResetBalance() {
-  if (!resetArmed) {
-    resetArmed = true;
-    el.resetBalance.textContent = "Confirm reset?";
-    el.resetBalance.classList.add("pf-btn-danger");
-    setTimeout(() => {
-      if (resetArmed) {
-        resetArmed = false;
-        el.resetBalance.textContent = "Reset Balance";
-        el.resetBalance.classList.remove("pf-btn-danger");
-      }
-    }, 3000);
-    return;
-  }
-  resetArmed = false;
-  el.resetBalance.textContent = "Reset Balance";
-  el.resetBalance.classList.remove("pf-btn-danger");
-  await PaperFlipStorage.resetAccount();
   await render();
 }
 
@@ -149,7 +143,12 @@ function openStatsPage() {
   chrome.tabs.create({ url: chrome.runtime.getURL("stats/stats.html") });
 }
 
-// --- Quick trade: ask the active tab's content script what token it's on ---
+function openChartTab(token) {
+  const url = token.pairUrl || `https://dexscreener.com/search?q=${encodeURIComponent(token.tokenAddress)}`;
+  chrome.tabs.create({ url });
+}
+
+// --- Quick trade + Insta Buy: ask the active tab's content script what token it's on ---
 
 function queryActiveTabToken() {
   return new Promise((resolve) => {
@@ -164,31 +163,142 @@ function queryActiveTabToken() {
   });
 }
 
+async function executeQuickBuy(amountUsd) {
+  if (!currentToken || !amountUsd || amountUsd <= 0) return;
+  await PaperFlipStorage.openTrade({
+    tokenAddress: currentToken.tokenAddress,
+    tokenSymbol: currentToken.tokenSymbol,
+    chain: currentToken.chain,
+    site: currentToken.site,
+    entryPrice: currentToken.priceUsd,
+    amountUsd,
+  });
+  openChartTab(currentToken);
+  await render();
+}
+
 async function setupQuickTrade() {
-  const current = await queryActiveTabToken();
-  if (!current?.tokenAddress || !current?.priceUsd) return;
+  currentToken = await queryActiveTabToken();
+  if (!currentToken?.tokenAddress || !currentToken?.priceUsd) return;
 
   el.quickTrade.hidden = false;
-  el.quickSymbol.textContent = current.tokenSymbol || "UNKNOWN";
-  el.quickPrice.textContent = formatPriceSmall(current.priceUsd);
+  el.quickSymbol.textContent = currentToken.tokenSymbol || "UNKNOWN";
+  el.quickPrice.textContent = formatPriceSmall(currentToken.priceUsd);
 
   el.quickBuy.addEventListener("click", async () => {
     const amountUsd = Number(el.quickAmount.value) || 0;
-    if (amountUsd <= 0) return;
     el.quickBuy.disabled = true;
     try {
-      await PaperFlipStorage.openTrade({
-        tokenAddress: current.tokenAddress,
-        tokenSymbol: current.tokenSymbol,
-        chain: current.chain,
-        site: current.site,
-        entryPrice: current.priceUsd,
-        amountUsd,
-      });
-      await render();
+      await executeQuickBuy(amountUsd);
     } finally {
       el.quickBuy.disabled = false;
     }
+  });
+
+  el.quickInstabuy.addEventListener("click", async () => {
+    el.quickInstabuy.disabled = true;
+    try {
+      const settings = await PaperFlipStorage.getSettings();
+      await executeQuickBuy(settings.instaBuyAmountUsd);
+    } finally {
+      el.quickInstabuy.disabled = false;
+    }
+  });
+}
+
+// --- Wallet manager ---
+
+async function getSolPriceUsd() {
+  if (solPriceUsd) return solPriceUsd;
+  try {
+    const info = await PaperFlipPriceApi.getTokenPrice(PaperFlipPriceApi.SOL_MINT_ADDRESS);
+    solPriceUsd = info?.priceUsd || null;
+  } catch (err) {
+    solPriceUsd = null;
+  }
+  return solPriceUsd;
+}
+
+async function renderWalletPanel(settings) {
+  el.walletCurrent.textContent = formatUsd(settings.currentBalance);
+  const price = await getSolPriceUsd();
+  el.walletSolSub.textContent = price ? `≈ ${(settings.currentBalance / price).toFixed(3)} SOL @ ${formatUsd(price)}` : "SOL price unavailable — showing USD only";
+  updateWalletPreview();
+}
+
+async function updateWalletPreview() {
+  const amount = Number(el.walletAmount.value) || 0;
+  if (!amount) {
+    el.walletPreview.textContent = "";
+    return;
+  }
+  const unit = el.walletUnit.value;
+  if (unit === "sol") {
+    const price = await getSolPriceUsd();
+    el.walletPreview.textContent = price ? `≈ ${formatUsd(amount * price)}` : "SOL price unavailable — try USD instead";
+  } else {
+    const price = await getSolPriceUsd();
+    el.walletPreview.textContent = price ? `≈ ${(amount / price).toFixed(3)} SOL` : "";
+  }
+}
+
+async function resolveWalletUsdAmount() {
+  const amount = Number(el.walletAmount.value) || 0;
+  if (amount <= 0) return null;
+  if (el.walletUnit.value === "usd") return amount;
+  const price = await getSolPriceUsd();
+  if (!price) return null;
+  return amount * price;
+}
+
+/** Two-step confirm: first click arms the button, second click (within 3s) fires. */
+function armButton(button, idleLabel, confirmLabel, onConfirm) {
+  let armed = false;
+  let timer = null;
+  button.textContent = idleLabel;
+  button.addEventListener("click", async () => {
+    if (!armed) {
+      armed = true;
+      button.textContent = confirmLabel;
+      button.classList.add("pf-btn-danger");
+      timer = setTimeout(() => {
+        armed = false;
+        button.textContent = idleLabel;
+        button.classList.remove("pf-btn-danger");
+      }, 3000);
+      return;
+    }
+    clearTimeout(timer);
+    armed = false;
+    button.textContent = idleLabel;
+    button.classList.remove("pf-btn-danger");
+    await onConfirm();
+  });
+}
+
+function setupWalletPanel() {
+  el.walletToggle.addEventListener("click", async () => {
+    el.walletPanel.hidden = !el.walletPanel.hidden;
+    if (!el.walletPanel.hidden) {
+      const settings = await PaperFlipStorage.getSettings();
+      renderWalletPanel(settings);
+    }
+  });
+
+  el.walletAmount.addEventListener("input", updateWalletPreview);
+  el.walletUnit.addEventListener("change", updateWalletPreview);
+
+  armButton(el.walletApply, "Set Balance (resets history)", "Confirm — wipes trades?", async () => {
+    const usd = await resolveWalletUsdAmount();
+    if (usd == null) return;
+    await PaperFlipStorage.resetAccount(usd);
+    el.walletAmount.value = "";
+    await render();
+  });
+
+  armButton(el.walletQuickReset, "Quick Reset (same balance)", "Confirm reset?", async () => {
+    await PaperFlipStorage.resetAccount();
+    await render();
   });
 }
 
@@ -199,7 +309,7 @@ function startAutoRefresh() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   el.viewStats.addEventListener("click", openStatsPage);
-  el.resetBalance.addEventListener("click", handleResetBalance);
+  setupWalletPanel();
 
   await render();
   setupQuickTrade();

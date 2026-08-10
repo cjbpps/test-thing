@@ -23,7 +23,7 @@
 
   const RESOLVE_RETRY_MS = 2000;
   const RESOLVE_MAX_ATTEMPTS = 20; // ~40s of retrying for SPA content to load
-  const PRICE_REFRESH_MS = 8000;
+  const PRICE_REFRESH_MS = 5000;
   const POSITION_STORAGE_KEY = "paperflip-overlay-pos";
 
   let currentToken = null; // last resolved {tokenAddress, tokenSymbol, chain, priceUsd, site}
@@ -119,18 +119,21 @@
         <div class="pf-ov-body" id="pf-ov-body">
           <div class="pf-ov-token-row">
             <span class="pf-ov-symbol" id="pf-ov-symbol">—</span>
-            <span class="pf-ov-price" id="pf-ov-price">$0.00</span>
+            <span class="pf-ov-price-wrap">
+              <span class="pf-ov-live-dot" title="Live price"></span>
+              <span class="pf-ov-price" id="pf-ov-price">$0.00</span>
+            </span>
           </div>
           <div class="pf-ov-positions" id="pf-ov-positions"></div>
+          <button id="pf-ov-instabuy" class="pf-ov-btn pf-ov-btn-instabuy">⚡ Insta Buy <span id="pf-ov-instabuy-amt">$100</span></button>
           <div class="pf-ov-trade-row">
-            <input type="number" id="pf-ov-amount" class="pf-ov-input" placeholder="Amount USD" min="0" step="1" value="100" />
-            <button id="pf-ov-quickbuy" class="pf-ov-btn pf-ov-btn-ghost" title="Quick buy $50">$50</button>
+            <input type="number" id="pf-ov-amount" class="pf-ov-input" placeholder="Custom amount USD" min="0" step="1" value="100" />
+            <button id="pf-ov-buy" class="pf-ov-btn pf-ov-btn-ghost">Buy</button>
           </div>
           <div class="pf-ov-tpsl-row">
             <input type="number" id="pf-ov-tp" class="pf-ov-input pf-ov-input-sm" placeholder="TP %" />
             <input type="number" id="pf-ov-sl" class="pf-ov-input pf-ov-input-sm" placeholder="SL %" />
           </div>
-          <button id="pf-ov-buy" class="pf-ov-btn pf-ov-btn-buy">Buy (Paper)</button>
         </div>
       </div>
       <div class="pf-ov-toast-stack" id="pf-ov-toast-stack"></div>
@@ -140,10 +143,13 @@
       e.stopPropagation();
       toggleMinimize();
     });
-    wrap.querySelector("#pf-ov-buy").addEventListener("click", handleBuyClick);
-    wrap.querySelector("#pf-ov-quickbuy").addEventListener("click", () => {
-      wrap.querySelector("#pf-ov-amount").value = "50";
-      handleBuyClick();
+    wrap.querySelector("#pf-ov-buy").addEventListener("click", () => {
+      const amountUsd = Number(wrap.querySelector("#pf-ov-amount").value) || 0;
+      executeBuy(amountUsd);
+    });
+    wrap.querySelector("#pf-ov-instabuy").addEventListener("click", async () => {
+      const settings = await PaperFlipStorage.getSettings();
+      executeBuy(settings.instaBuyAmountUsd);
     });
     return wrap;
   }
@@ -155,6 +161,8 @@
     widgetEl.querySelector("#pf-ov-balance").textContent = formatUsd(settings.currentBalance);
     widgetEl.querySelector("#pf-ov-symbol").textContent = currentToken.tokenSymbol;
     widgetEl.querySelector("#pf-ov-price").textContent = formatPriceSmall(currentToken.priceUsd);
+    widgetEl.querySelector("#pf-ov-instabuy-amt").textContent = formatUsd(settings.instaBuyAmountUsd);
+    flashLiveDot();
 
     if (settings.defaultTakeProfitPercent != null && !widgetEl.querySelector("#pf-ov-tp").value) {
       widgetEl.querySelector("#pf-ov-tp").value = settings.defaultTakeProfitPercent;
@@ -182,6 +190,15 @@
     }
   }
 
+  function flashLiveDot() {
+    const dot = widgetEl?.querySelector(".pf-ov-live-dot");
+    if (!dot) return;
+    dot.classList.remove("pf-ov-live-dot-flash");
+    // Force reflow so the animation restarts on every price tick.
+    void dot.offsetWidth;
+    dot.classList.add("pf-ov-live-dot-flash");
+  }
+
   function toggleMinimize() {
     minimized = !minimized;
     widgetEl.querySelector("#pf-ov-body").style.display = minimized ? "none" : "";
@@ -190,10 +207,8 @@
 
   // ---------- actions ----------
 
-  async function handleBuyClick() {
-    if (!currentToken) return;
-    const amountUsd = Number(widgetEl.querySelector("#pf-ov-amount").value) || 0;
-    if (amountUsd <= 0) return;
+  async function executeBuy(amountUsd) {
+    if (!currentToken || !amountUsd || amountUsd <= 0) return;
     const tp = widgetEl.querySelector("#pf-ov-tp").value;
     const sl = widgetEl.querySelector("#pf-ov-sl").value;
 
@@ -265,9 +280,24 @@
       .sort((a, b) => b.entryTimestamp - a.entryTimestamp)
       .slice(0, 5);
 
-    strip.innerHTML = relevant
-      .map((t) => `<span class="pf-ov-marker pf-ov-marker-${t.status === "open" ? "buy" : t.pnlUsd >= 0 ? "win" : "loss"}" title="${t.status === "open" ? "Open" : `Closed ${formatUsd(t.pnlUsd)}`}">${t.status === "open" ? "▲" : t.pnlUsd >= 0 ? "●" : "▼"}</span>`)
-      .join("");
+    strip.innerHTML = relevant.map((t) => markerHtml(t)).join("");
+  }
+
+  function markerHtml(t) {
+    const entryTime = new Date(t.entryTimestamp).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    if (t.status === "open") {
+      const livePnlUsd = currentToken ? t.amountTokens * currentToken.priceUsd - t.amountUsd : 0;
+      const title = `Bought ${formatUsd(t.amountUsd)} @ ${formatPriceSmall(t.entryPrice)} on ${entryTime}\nLive PnL: ${formatUsd(livePnlUsd)}`;
+      return `<span class="pf-ov-marker pf-ov-marker-buy" title="${escapeAttr(title)}">▲</span>`;
+    }
+    const exitTime = new Date(t.exitTimestamp).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    const win = t.pnlUsd >= 0;
+    const title = `${win ? "Win" : "Loss"}: ${formatUsd(t.pnlUsd)} (${t.pnlPercent >= 0 ? "+" : ""}${t.pnlPercent.toFixed(1)}%)\nEntry ${formatPriceSmall(t.entryPrice)} → Exit ${formatPriceSmall(t.exitPrice)}\nClosed ${exitTime}`;
+    return `<span class="pf-ov-marker pf-ov-marker-${win ? "win" : "loss"}" title="${escapeAttr(title)}">${win ? "●" : "▼"}</span>`;
+  }
+
+  function escapeAttr(s) {
+    return String(s ?? "").replace(/"/g, "&quot;");
   }
 
   // ---------- drag + persistence ----------

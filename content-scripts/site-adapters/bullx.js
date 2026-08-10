@@ -44,6 +44,7 @@
       chain: info.chain || found.chain,
       priceUsd: info.priceUsd,
       site: "bullx",
+      pairUrl: info.pairUrl,
     };
   }
 

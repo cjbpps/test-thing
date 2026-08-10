@@ -16,6 +16,7 @@
         <span class="pf-label">Virtual Balance</span>
         <span id="hdr-balance">$0.00</span>
       </div>
+      <button id="wallet-open" class="pf-btn pf-btn-ghost pf-btn-sm">💰 Wallet</button>
       <button id="dev-toggle" class="pf-btn pf-btn-ghost pf-btn-sm" title="Toggle dev tools">⚙ Dev tools</button>
     </div>
   </header>
@@ -47,6 +48,11 @@
         <span class="pf-label">Current Streak</span>
         <span class="pf-hero-value" id="stat-streak">—</span>
         <span class="pf-hero-sub" id="stat-streak-sub">no closed trades yet</span>
+      </div>
+      <div class="pf-card pf-hero">
+        <span class="pf-label"><span class="pf-live-dot"></span>Unrealized PnL (live)</span>
+        <span class="pf-hero-value" id="stat-unrealized-pnl">—</span>
+        <span class="pf-hero-sub" id="stat-unrealized-pnl-sub">0 open positions</span>
       </div>
     </section>
 
@@ -87,6 +93,22 @@
       </div>
     </section>
 
+    <section class="pf-card pf-calendar-section">
+      <div class="pf-calendar-header">
+        <span class="pf-card-title">PnL Calendar</span>
+        <div class="pf-calendar-nav">
+          <button id="cal-prev" class="pf-btn pf-btn-ghost pf-btn-sm" aria-label="Previous month">‹</button>
+          <span id="cal-month-label" class="pf-calendar-month-label"></span>
+          <button id="cal-next" class="pf-btn pf-btn-ghost pf-btn-sm" aria-label="Next month">›</button>
+          <button id="cal-clear-filter" class="pf-btn pf-btn-ghost pf-btn-sm" hidden>Clear day filter ×</button>
+        </div>
+      </div>
+      <div class="pf-calendar-weekdays">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+      <div class="pf-calendar-grid" id="calendar-grid"></div>
+    </section>
+
     <section class="pf-card pf-table-section">
       <div class="pf-table-toolbar">
         <input type="search" id="filter-search" class="pf-input" placeholder="Search token symbol or address…" />
@@ -120,6 +142,45 @@
       </div>
     </section>
   </main>
+
+  <div id="wallet-modal" class="pf-modal-overlay" hidden>
+    <div class="pf-modal">
+      <div class="pf-modal-header">
+        <span class="pf-card-title">Wallet Manager</span>
+        <button id="wallet-close" class="pf-modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="pf-modal-body">
+        <div class="pf-wallet-current-row">
+          <span class="pf-label">Current Balance</span>
+          <span id="wallet-current-usd" class="pf-wallet-current-value">$10,000.00</span>
+        </div>
+        <span id="wallet-current-sol-sub" class="pf-wallet-sol-sub"></span>
+
+        <div class="pf-wallet-block">
+          <span class="pf-label">Set New Balance</span>
+          <div class="pf-wallet-input-row">
+            <input type="number" id="wallet-input-amount" class="pf-input" placeholder="Amount" min="0" step="0.01" />
+            <select id="wallet-input-unit" class="pf-select">
+              <option value="sol">SOL</option>
+              <option value="usd">USD</option>
+            </select>
+          </div>
+          <span id="wallet-preview" class="pf-wallet-sol-sub"></span>
+          <button id="wallet-apply" class="pf-btn pf-btn-primary pf-btn-block">Set Balance (resets trade history)</button>
+        </div>
+
+        <div class="pf-wallet-block">
+          <span class="pf-label">Insta Buy Preset (USD)</span>
+          <div class="pf-wallet-input-row">
+            <input type="number" id="wallet-instabuy-input" class="pf-input" min="1" step="1" />
+            <button id="wallet-instabuy-save" class="pf-btn pf-btn-ghost">Save</button>
+          </div>
+        </div>
+
+        <button id="wallet-quick-reset" class="pf-btn pf-btn-danger pf-btn-block">Quick Reset (same balance, wipes trade history)</button>
+      </div>
+    </div>
+  </div>
 
   <script src="../lib/chart.min.js"></script>
   <script src="../lib/storage.js"></script>

@@ -59,7 +59,7 @@
 
     const info = await PaperFlipPriceApi.getTokenPrice(parsed.tokenAddress);
     if (!info || !info.priceUsd) return null;
-    return { tokenAddress: parsed.tokenAddress, tokenSymbol: info.symbol || "UNKNOWN", chain: parsed.chain, priceUsd: info.priceUsd, site: "gmgn" };
+    return { tokenAddress: parsed.tokenAddress, tokenSymbol: info.symbol || "UNKNOWN", chain: parsed.chain, priceUsd: info.priceUsd, site: "gmgn", pairUrl: info.pairUrl };
   }
 
   function guessSymbolFromDom() {

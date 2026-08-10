@@ -11,9 +11,13 @@ const CHART_COLORS = { green: "#2ed573", red: "#ff4757", accent: "#58a6ff", yell
 
 let allTrades = [];
 let allSettings = null;
+let livePrices = new Map(); // tokenAddress -> priceInfo, for open positions only
 let sortState = { key: "entryTimestamp", dir: "desc" };
-let filterState = { search: "", site: "", chain: "", status: "" };
+let filterState = { search: "", site: "", chain: "", status: "", day: null };
 let expandedRowId = null;
+let calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let selectedDay = null;
+let solPriceUsd = null;
 const charts = {};
 
 const el = {
@@ -38,6 +42,25 @@ const el = {
   statAvgWinLoss: document.getElementById("stat-avg-win-loss"),
   statWinLossRatio: document.getElementById("stat-win-loss-ratio"),
   statAvgPosition: document.getElementById("stat-avg-position"),
+  statUnrealizedPnl: document.getElementById("stat-unrealized-pnl"),
+  statUnrealizedPnlSub: document.getElementById("stat-unrealized-pnl-sub"),
+  calPrev: document.getElementById("cal-prev"),
+  calNext: document.getElementById("cal-next"),
+  calMonthLabel: document.getElementById("cal-month-label"),
+  calClearFilter: document.getElementById("cal-clear-filter"),
+  calendarGrid: document.getElementById("calendar-grid"),
+  walletOpen: document.getElementById("wallet-open"),
+  walletModal: document.getElementById("wallet-modal"),
+  walletClose: document.getElementById("wallet-close"),
+  walletCurrentUsd: document.getElementById("wallet-current-usd"),
+  walletCurrentSolSub: document.getElementById("wallet-current-sol-sub"),
+  walletInputAmount: document.getElementById("wallet-input-amount"),
+  walletInputUnit: document.getElementById("wallet-input-unit"),
+  walletPreview: document.getElementById("wallet-preview"),
+  walletApply: document.getElementById("wallet-apply"),
+  walletInstabuyInput: document.getElementById("wallet-instabuy-input"),
+  walletInstabuySave: document.getElementById("wallet-instabuy-save"),
+  walletQuickReset: document.getElementById("wallet-quick-reset"),
   filterSearch: document.getElementById("filter-search"),
   filterSite: document.getElementById("filter-site"),
   filterChain: document.getElementById("filter-chain"),
@@ -93,11 +116,31 @@ async function loadData() {
 
 async function refresh() {
   await loadData();
+  await loadLivePrices();
   renderHeader();
   renderCards();
   renderCharts();
   populateFilterOptions();
   renderTable();
+  renderCalendar();
+}
+
+async function loadLivePrices() {
+  const open = PaperFlipStats.getOpenTrades(allTrades);
+  if (!open.length) {
+    livePrices = new Map();
+    return;
+  }
+  try {
+    livePrices = await PaperFlipPriceApi.getTokenPrices(open.map((t) => t.tokenAddress));
+  } catch (err) {
+    // Price fetch failed (offline, rate-limited) — keep the previous prices
+    // rather than blanking out the live PnL display.
+  }
+}
+
+function livePriceFor(t) {
+  return livePrices.get(t.tokenAddress)?.priceUsd || t.entryPrice;
 }
 
 function renderHeader() {
@@ -145,6 +188,12 @@ function renderCards() {
   el.statWinLossRatio.textContent =
     stats.avgWinLoss.winLossRatio === Infinity ? "∞" : stats.closedTradesCount ? stats.avgWinLoss.winLossRatio.toFixed(2) : "—";
   el.statAvgPosition.textContent = allTrades.length ? formatUsd(stats.avgPositionSize) : "—";
+
+  const open = PaperFlipStats.getOpenTrades(allTrades);
+  const unrealizedUsd = open.reduce((sum, t) => sum + (t.amountTokens * livePriceFor(t) - t.amountUsd), 0);
+  el.statUnrealizedPnl.textContent = open.length ? formatUsd(unrealizedUsd) : "—";
+  el.statUnrealizedPnl.className = `pf-hero-value ${open.length ? pnlClass(unrealizedUsd) : ""}`;
+  el.statUnrealizedPnlSub.textContent = `${open.length} open position${open.length === 1 ? "" : "s"}`;
 }
 
 // ---------- charts ----------
@@ -288,6 +337,7 @@ function getFilteredSortedTrades() {
     if (filterState.site && t.site !== filterState.site) return false;
     if (filterState.chain && t.chain !== filterState.chain) return false;
     if (filterState.status && t.status !== filterState.status) return false;
+    if (filterState.day && (!t.exitTimestamp || PaperFlipStats.dayKey(t.exitTimestamp) !== filterState.day)) return false;
     if (search && !`${t.tokenSymbol} ${t.tokenAddress}`.toLowerCase().includes(search)) return false;
     return true;
   });
@@ -317,6 +367,15 @@ function renderTable() {
   el.tbody.innerHTML = "";
 
   for (const t of rows) {
+    const isOpen = t.status === "open";
+    let pnlUsd = t.pnlUsd;
+    let pnlPercent = t.pnlPercent;
+    if (isOpen) {
+      const livePrice = livePriceFor(t);
+      pnlUsd = t.amountTokens * livePrice - t.amountUsd;
+      pnlPercent = t.amountUsd ? (pnlUsd / t.amountUsd) * 100 : 0;
+    }
+
     const tr = document.createElement("tr");
     tr.className = "pf-row";
     tr.dataset.tradeId = t.id;
@@ -326,8 +385,8 @@ function renderTable() {
       <td>${t.exitTimestamp ? formatDate(t.exitTimestamp) : "—"}</td>
       <td>${t.status === "closed" ? PaperFlipStats.formatDuration(t.holdMs) : "—"}</td>
       <td>${formatUsd(t.amountUsd)}</td>
-      <td class="${t.status === "closed" ? pnlClass(t.pnlUsd) : ""}">${t.status === "closed" ? formatUsd(t.pnlUsd) : "—"}</td>
-      <td class="${t.status === "closed" ? pnlClass(t.pnlPercent) : ""}">${t.status === "closed" ? formatPct(t.pnlPercent) : "—"}</td>
+      <td class="${pnlClass(pnlUsd)}">${formatUsd(pnlUsd)}${isOpen ? ' <span class="pf-live-tag">live</span>' : ""}</td>
+      <td class="${pnlClass(pnlPercent)}">${formatPct(pnlPercent)}</td>
       <td>${SITE_LABELS[t.site] || t.site}</td>
       <td><span class="pf-status-pill pf-status-${t.status}">${t.status}</span></td>
     `;
@@ -365,6 +424,122 @@ function buildDetailRow(t) {
 function toggleExpand(id) {
   expandedRowId = expandedRowId === id ? null : id;
   renderTable();
+}
+
+// ---------- PnL calendar ----------
+
+function renderCalendar() {
+  const year = calendarMonth.getFullYear();
+  const month = calendarMonth.getMonth();
+  el.calMonthLabel.textContent = calendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+
+  const pnlByDay = PaperFlipStats.pnlByCalendarDay(allTrades);
+  const startWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayKey = PaperFlipStats.dayKey(Date.now());
+
+  el.calendarGrid.innerHTML = "";
+  for (let i = 0; i < startWeekday; i++) {
+    const empty = document.createElement("div");
+    empty.className = "pf-cal-day pf-cal-day-empty";
+    el.calendarGrid.appendChild(empty);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const key = PaperFlipStats.dayKey(new Date(year, month, day).getTime());
+    const info = pnlByDay.get(key);
+    const cell = document.createElement("div");
+    cell.className = "pf-cal-day";
+    if (key === todayKey) cell.classList.add("pf-cal-day-today");
+    cell.innerHTML = `
+      <span class="pf-cal-day-num">${day}</span>
+      ${info ? `<span class="pf-cal-day-pnl ${pnlClass(info.pnlUsd)}">${formatUsd(info.pnlUsd)}</span>` : ""}
+    `;
+    if (info) {
+      cell.classList.add("pf-cal-day-trades", info.pnlUsd >= 0 ? "pf-cal-day-win" : "pf-cal-day-loss");
+      if (key === selectedDay) cell.classList.add("pf-cal-day-selected");
+      cell.title = `${info.trades} trade${info.trades === 1 ? "" : "s"} — ${formatUsd(info.pnlUsd)} (${info.wins}W/${info.losses}L)`;
+      cell.addEventListener("click", () => {
+        selectedDay = selectedDay === key ? null : key;
+        filterState.day = selectedDay;
+        el.calClearFilter.hidden = !selectedDay;
+        renderCalendar();
+        renderTable();
+      });
+    }
+    el.calendarGrid.appendChild(cell);
+  }
+}
+
+// ---------- wallet manager ----------
+
+async function getSolPriceUsd() {
+  if (solPriceUsd) return solPriceUsd;
+  try {
+    const info = await PaperFlipPriceApi.getTokenPrice(PaperFlipPriceApi.SOL_MINT_ADDRESS);
+    solPriceUsd = info?.priceUsd || null;
+  } catch (err) {
+    solPriceUsd = null;
+  }
+  return solPriceUsd;
+}
+
+async function openWalletModal() {
+  el.walletModal.hidden = false;
+  el.walletInstabuyInput.value = allSettings.instaBuyAmountUsd;
+  await renderWalletCurrent();
+}
+
+async function renderWalletCurrent() {
+  el.walletCurrentUsd.textContent = formatUsd(allSettings.currentBalance);
+  const price = await getSolPriceUsd();
+  el.walletCurrentSolSub.textContent = price
+    ? `≈ ${(allSettings.currentBalance / price).toFixed(3)} SOL @ ${formatUsd(price)}`
+    : "SOL price unavailable — showing USD only";
+  await updateWalletPreview();
+}
+
+async function updateWalletPreview() {
+  const amount = Number(el.walletInputAmount.value) || 0;
+  if (!amount) {
+    el.walletPreview.textContent = "";
+    return;
+  }
+  const price = await getSolPriceUsd();
+  if (el.walletInputUnit.value === "sol") {
+    el.walletPreview.textContent = price ? `≈ ${formatUsd(amount * price)}` : "SOL price unavailable — try USD instead";
+  } else {
+    el.walletPreview.textContent = price ? `≈ ${(amount / price).toFixed(3)} SOL` : "";
+  }
+}
+
+async function resolveWalletUsdAmount() {
+  const amount = Number(el.walletInputAmount.value) || 0;
+  if (amount <= 0) return null;
+  if (el.walletInputUnit.value === "usd") return amount;
+  const price = await getSolPriceUsd();
+  return price ? amount * price : null;
+}
+
+/** Two-step confirm: first click arms the button, second click (within 3s) fires. */
+function armButton(button, idleLabel, confirmLabel, onConfirm) {
+  let armed = false;
+  let timer = null;
+  button.addEventListener("click", async () => {
+    if (!armed) {
+      armed = true;
+      button.textContent = confirmLabel;
+      timer = setTimeout(() => {
+        armed = false;
+        button.textContent = idleLabel;
+      }, 3000);
+      return;
+    }
+    clearTimeout(timer);
+    armed = false;
+    button.textContent = idleLabel;
+    await onConfirm();
+  });
 }
 
 function updateSortIndicators() {
@@ -519,6 +694,52 @@ function wireEvents() {
       }
       renderTable();
     });
+  });
+
+  el.calPrev.addEventListener("click", () => {
+    calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1);
+    renderCalendar();
+  });
+  el.calNext.addEventListener("click", () => {
+    calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1);
+    renderCalendar();
+  });
+  el.calClearFilter.addEventListener("click", () => {
+    selectedDay = null;
+    filterState.day = null;
+    el.calClearFilter.hidden = true;
+    renderCalendar();
+    renderTable();
+  });
+
+  el.walletOpen.addEventListener("click", openWalletModal);
+  el.walletClose.addEventListener("click", () => {
+    el.walletModal.hidden = true;
+  });
+  el.walletModal.addEventListener("click", (e) => {
+    if (e.target === el.walletModal) el.walletModal.hidden = true;
+  });
+  el.walletInputAmount.addEventListener("input", updateWalletPreview);
+  el.walletInputUnit.addEventListener("change", updateWalletPreview);
+  el.walletInstabuySave.addEventListener("click", async () => {
+    const amt = Number(el.walletInstabuyInput.value) || 100;
+    await PaperFlipStorage.setSettings({ instaBuyAmountUsd: amt });
+    await refresh();
+  });
+
+  armButton(el.walletApply, "Set Balance (resets trade history)", "Confirm — wipes trades?", async () => {
+    const usd = await resolveWalletUsdAmount();
+    if (usd == null) return;
+    await PaperFlipStorage.resetAccount(usd);
+    el.walletInputAmount.value = "";
+    await refresh();
+    el.walletModal.hidden = true;
+  });
+
+  armButton(el.walletQuickReset, "Quick Reset (same balance, wipes trade history)", "Confirm reset?", async () => {
+    await PaperFlipStorage.resetAccount();
+    await refresh();
+    el.walletModal.hidden = true;
   });
 
   PaperFlipStorage.subscribe(() => refresh());

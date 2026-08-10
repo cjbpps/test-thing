@@ -92,6 +92,10 @@ main {
   border-bottom: 1px solid #4a3419;
 }
 
+.pf-dev-panel[hidden] {
+  display: none;
+}
+
 .pf-dev-label {
   font-size: 12px;
   color: var(--pf-yellow);
@@ -115,9 +119,30 @@ main {
 
 .pf-hero-cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
   margin-bottom: 14px;
+}
+
+.pf-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pf-green);
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: middle;
+  animation: pf-live-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pf-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 
 .pf-hero {
@@ -294,6 +319,17 @@ main {
   letter-spacing: 0.3px;
 }
 
+.pf-live-tag {
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--pf-accent);
+  border: 1px solid var(--pf-accent);
+  border-radius: 999px;
+  padding: 0 4px;
+  vertical-align: middle;
+}
+
 .pf-status-open {
   background: rgba(88, 166, 255, 0.15);
   color: var(--pf-accent);
@@ -369,6 +405,194 @@ main {
 .pf-btn-danger {
   background: var(--pf-red);
   color: #2a0505;
+}
+
+.pf-btn-block {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ---------- PnL calendar ---------- */
+
+.pf-calendar-section {
+  margin-bottom: 14px;
+}
+
+.pf-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.pf-calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pf-calendar-month-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  min-width: 110px;
+  text-align: center;
+}
+
+.pf-calendar-weekdays,
+.pf-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.pf-calendar-weekdays {
+  margin-bottom: 6px;
+}
+
+.pf-calendar-weekdays span {
+  text-align: center;
+  font-size: 10px;
+  color: var(--pf-text-dimmer);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.pf-cal-day {
+  aspect-ratio: 1.3 / 1;
+  border-radius: 8px;
+  border: 1px solid var(--pf-border);
+  background: var(--pf-bg);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: default;
+  font-size: 10.5px;
+}
+
+.pf-cal-day-empty {
+  border: none;
+  background: transparent;
+}
+
+.pf-cal-day-num {
+  color: var(--pf-text-dimmer);
+  font-size: 10px;
+}
+
+.pf-cal-day-pnl {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  align-self: flex-end;
+}
+
+.pf-cal-day-trades {
+  cursor: pointer;
+}
+
+.pf-cal-day-trades:hover {
+  border-color: var(--pf-accent);
+}
+
+.pf-cal-day-win {
+  background: rgba(46, 213, 115, 0.14);
+}
+
+.pf-cal-day-win.pf-cal-day-selected,
+.pf-cal-day-loss.pf-cal-day-selected {
+  border-color: var(--pf-accent);
+  border-width: 2px;
+}
+
+.pf-cal-day-loss {
+  background: rgba(255, 71, 87, 0.14);
+}
+
+.pf-cal-day-today .pf-cal-day-num {
+  color: var(--pf-accent);
+  font-weight: 700;
+}
+
+/* ---------- modal ---------- */
+
+.pf-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.pf-modal-overlay[hidden] {
+  display: none;
+}
+
+.pf-modal {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: var(--pf-bg-elevated);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+.pf-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--pf-border);
+}
+
+.pf-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--pf-text-dim);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.pf-modal-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pf-wallet-current-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.pf-wallet-current-value {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-wallet-sol-sub {
+  font-size: 11px;
+  color: var(--pf-text-dim);
+  margin-bottom: 8px;
+}
+
+.pf-wallet-block {
+  border-top: 1px solid var(--pf-border);
+  padding-top: 12px;
+  margin-top: 8px;
+}
+
+.pf-wallet-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
 }
 
 @media (max-width: 980px) {

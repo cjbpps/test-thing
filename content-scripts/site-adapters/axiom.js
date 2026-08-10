@@ -40,6 +40,7 @@
       chain: "solana",
       priceUsd: info.priceUsd,
       site: "axiom",
+      pairUrl: info.pairUrl,
     };
   }
 

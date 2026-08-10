@@ -40,6 +40,7 @@
       chain: info.chain || found.chain,
       priceUsd: info.priceUsd,
       site: "padre",
+      pairUrl: info.pairUrl,
     };
   }
 

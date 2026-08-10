@@ -44,15 +44,35 @@
       <span id="quick-symbol" class="pf-quick-symbol">—</span>
       <span id="quick-price" class="pf-quick-price">$0.00</span>
     </div>
+    <button id="quick-instabuy" class="pf-btn pf-btn-instabuy">⚡ Insta Buy <span id="quick-instabuy-amt">$100</span></button>
     <div class="pf-quick-trade-row">
-      <input type="number" id="quick-amount" class="pf-input" placeholder="Amount USD" min="0" step="1" value="100" />
-      <button id="quick-buy" class="pf-btn pf-btn-buy">Buy</button>
+      <input type="number" id="quick-amount" class="pf-input" placeholder="Custom amount USD" min="0" step="1" value="100" />
+      <button id="quick-buy" class="pf-btn pf-btn-ghost">Buy</button>
     </div>
+  </section>
+
+  <section class="pf-wallet-panel" id="wallet-panel" hidden>
+    <div class="pf-section-head"><span>Wallet Manager</span></div>
+    <div class="pf-wallet-current-row">
+      <span class="pf-label">Current</span>
+      <span id="wallet-current" class="pf-wallet-current-value">$10,000.00</span>
+    </div>
+    <span id="wallet-sol-sub" class="pf-wallet-sol-sub"></span>
+    <div class="pf-quick-trade-row">
+      <input type="number" id="wallet-amount" class="pf-input" placeholder="Amount" min="0" step="0.01" />
+      <select id="wallet-unit" class="pf-select">
+        <option value="sol">SOL</option>
+        <option value="usd">USD</option>
+      </select>
+    </div>
+    <span id="wallet-preview" class="pf-wallet-preview"></span>
+    <button id="wallet-apply" class="pf-btn pf-btn-primary">Set Balance (resets history)</button>
+    <button id="wallet-quick-reset" class="pf-btn pf-btn-ghost">Quick Reset (same balance)</button>
   </section>
 
   <footer class="pf-footer">
     <button id="view-stats" class="pf-btn pf-btn-primary">View Full Stats</button>
-    <button id="reset-balance" class="pf-btn pf-btn-ghost">Reset Balance</button>
+    <button id="wallet-toggle" class="pf-btn pf-btn-ghost">💰 Wallet</button>
   </footer>
 
   <script src="../lib/storage.js"></script>

@@ -248,7 +248,8 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.pf-input {
+.pf-input,
+.pf-select {
   flex: 1;
   background: var(--pf-bg);
   border: 1px solid var(--pf-border);
@@ -257,6 +258,43 @@ body {
   padding: 6px 8px;
   font-size: 12px;
   min-width: 0;
+}
+
+.pf-select {
+  flex: 0 0 auto;
+}
+
+.pf-wallet-panel {
+  margin: 0 14px 12px;
+  padding: 10px;
+  background: var(--pf-bg-elevated);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pf-wallet-panel[hidden] {
+  display: none;
+}
+
+.pf-wallet-current-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.pf-wallet-current-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-wallet-sol-sub,
+.pf-wallet-preview {
+  font-size: 10.5px;
+  color: var(--pf-text-dim);
 }
 
 .pf-footer {
@@ -302,6 +340,15 @@ body {
   background: var(--pf-green);
   color: #05130a;
   padding: 6px 14px;
+}
+
+.pf-btn-instabuy {
+  width: 100%;
+  background: linear-gradient(135deg, #f0c14b, #e0a52e);
+  color: #241a05;
+  padding: 9px 10px;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .pf-btn-sell {

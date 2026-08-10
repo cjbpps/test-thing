@@ -34,6 +34,7 @@
       chain: info.chain,
       priceUsd: info.priceUsd,
       site: "dexscreener",
+      pairUrl: location.href, // we're already on the exact pair page
     };
   }
 

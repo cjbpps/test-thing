@@ -37,6 +37,7 @@
       chain: "solana",
       priceUsd: info.priceUsd,
       site: "photon",
+      pairUrl: info.pairUrl,
     };
   }
 
